@@ -32,9 +32,6 @@ extern "C" {
 #endif
 ')
 #end
-#if (cpp && windows)
-@:cppInclude("Windows.h")
-#end
 class System
 {
 	/**
@@ -147,16 +144,6 @@ class System
 		#end
 
 		#if sys
-		#if (cpp && windows)
-		// flush and terminate right away, so exiting can't hang on shutdown handlers
-		try
-		{
-			Sys.stdout().flush();
-			Sys.stderr().flush();
-		}
-		catch (e:Dynamic) {}
-		untyped __cpp__("::TerminateProcess(::GetCurrentProcess(), (unsigned int){0})", code);
-		#end
 		Sys.exit(code);
 		#end
 	}
