@@ -33,7 +33,7 @@
 	<set name="LIME_SDL" value="1" />
 	<set name="LIME_SDL_IMAGE" value="1" if="LIME_SDL" />
 	<set name="LIME_ZLIB" value="1" />
-	<set name="LIME_IMGUI" value="1" if="windows || mac || linux" unless="linux HXCPP_ARMV7 || linux HXCPP_ARM64" />
+	<set name="LIME_IMGUI" value="1" if="windows || mac || linux" />
 
 	<set name="OUTPUT_DIR" value="../ndll" unless="OUTPUT_DIR" />
 	<set name="DEBUGEXTRA" value="-debug" if="fulldebug" />

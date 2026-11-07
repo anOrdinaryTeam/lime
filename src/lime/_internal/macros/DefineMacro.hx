@@ -40,9 +40,8 @@ class DefineMacro
 				Compiler.define("lime-harfbuzz");
 				Compiler.define("lime-miniaudio");
 
-				// Dear ImGui is built into the desktop GL NDLLs only (see project/Build.xml)
-				if (!Context.defined("ios") && !Context.defined("android")
-					&& !(Context.defined("linux") && (Context.defined("armv7") || Context.defined("arm64") || Context.defined("HXCPP_ARMV7") || Context.defined("HXCPP_ARM64"))))
+				// Dear ImGui is built into the desktop NDLLs (see project/Build.xml)
+				if (!Context.defined("ios") && !Context.defined("android"))
 				{
 					Compiler.define("lime-imgui");
 				}

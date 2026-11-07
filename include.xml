@@ -15,7 +15,7 @@
 	<define name="lime-native" if="native" />
 	<define name="lime-opengl" if="desktop" />
 	<define name="lime-opengles" if="mobile || linux armv7 || linux arm64" />
-	<define name="lime-imgui" if="desktop" unless="linux armv7 || linux arm64" />
+	<define name="lime-imgui" if="desktop" />
 
 	<haxedef name="no-compilation" />
 

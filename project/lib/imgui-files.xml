@@ -6,6 +6,15 @@
 		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/imgui" />
 		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/imgui/backends" />
 
+		<section if="linux HXCPP_ARMV7 || linux HXCPP_ARM64">
+
+			<!-- GLES 3 build of the OpenGL3 backend, loaded through lime's glad -->
+			<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/custom/imgui" />
+			<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/glad/include" />
+			<compilerflag value="-DIMGUI_IMPL_OPENGL_ES3" />
+
+		</section>
+
 		<depend name="${NATIVE_TOOLKIT_PATH}/imgui/imconfig.h" />
 		<depend name="${NATIVE_TOOLKIT_PATH}/imgui/imgui.h" />
 		<depend name="${NATIVE_TOOLKIT_PATH}/imgui/imgui_internal.h" />

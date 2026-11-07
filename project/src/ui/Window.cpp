@@ -198,8 +198,13 @@ namespace lime
 				io.ConfigErrorRecoveryEnableAssert = false;
 
 				ImGui_ImplSDL3_InitForOpenGL(sdlWindow, context);
+#if defined(LIME_OPENGL_GLES)
+				// Linux ARM: GLES 3.0 context, backend built with IMGUI_IMPL_OPENGL_ES3
+				ImGui_ImplOpenGL3_Init("#version 300 es");
+#else
 				// Shadow requests GL 3.2 core on macOS and 4.0 compatibility elsewhere
 				ImGui_ImplOpenGL3_Init("#version 150");
+#endif
 			}
 #endif
 
