@@ -2,6 +2,7 @@
 
 #include <hx/CFFIPrime.h>
 #include <SDL3/SDL.h>
+#include <app/FramePacer.h>
 #include <ui/Window.h>
 
 namespace lime
@@ -23,6 +24,12 @@ namespace lime
 		bool Update();
 		void RegisterWindow(Window *window);
 
+		// swap gate for the window; null before the application exists
+		static FramePacer *GetFramePacer()
+		{
+			return currentApplication ? &currentApplication->framePacer : nullptr;
+		}
+
 	  private:
 		void HandleEvent(SDL_Event *event);
 		void ProcessClipboardEvent(SDL_Event *event);
@@ -37,7 +44,7 @@ namespace lime
 		void ProcessWindowEvent(SDL_Event *event);
 
 		void RenderFrame();
-		void FramePacer();
+		void PaceFrame(bool paced);
 
 		static bool HandleAppLifecycleEvent(void *userdata, SDL_Event *event);
 #if defined(HX_WINDOWS) || defined(HX_MACOS) || defined(HX_LINUX)
@@ -48,6 +55,9 @@ namespace lime
 #endif
 
 		static Application *currentApplication;
+
+		FramePacer framePacer;
+		FrameWaitState frameWait;
 	};
 
 } // namespace lime

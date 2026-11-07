@@ -224,6 +224,7 @@
 		</section>
 
 		<file name="src/app/Application.cpp" />
+		<file name="src/app/FramePacer.cpp" />
 		<file name="src/graphics/Image.cpp" />
 		<file name="src/graphics/ImageBuffer.cpp" />
 		<file name="src/math/Matrix3.cpp" />

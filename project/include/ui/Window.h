@@ -51,6 +51,7 @@ namespace lime
 
 		int Alert(int type, const char *message, const char *title, const char **buttons, int count);
 		bool SetVSyncMode(int mode);
+		bool SetFramePacerMode(int mode);
 		void Close();
 		void ContextFlip();
 		void ContextMakeCurrent();

@@ -1417,6 +1417,12 @@ namespace lime
 		return targetWindow->SetVSyncMode(mode);
 	}
 
+	bool lime_window_set_frame_pacer_mode(value window, int mode)
+	{
+		Window *targetWindow = (Window *)val_data(window);
+		return targetWindow->SetFramePacerMode(mode);
+	}
+
 	void lime_window_close(value window)
 	{
 		Window *targetWindow = (Window *)val_data(window);
@@ -1942,6 +1948,7 @@ namespace lime
 	DEFINE_PRIME5(lime_window_alert);
 	DEFINE_PRIME2v(lime_gesture_event_manager_register);
 	DEFINE_PRIME2(lime_window_set_vsync_mode);
+	DEFINE_PRIME2(lime_window_set_frame_pacer_mode);
 	DEFINE_PRIME1v(lime_window_close);
 	DEFINE_PRIME1v(lime_window_context_flip);
 	DEFINE_PRIME1v(lime_window_context_make_current);

@@ -898,6 +898,8 @@ namespace lime
 #ifdef IPHONE
 		SDL_SetiOSAnimationCallback(window->sdlWindow, 1, HandleAppAnimationCallback, NULL);
 #endif
+
+		framePacer.SetWindow(window->sdlWindow);
 	}
 
 	void Application::SetFrameRate(double frameRate)
@@ -925,18 +927,23 @@ namespace lime
 #endif
 	}
 
-	void Application::FramePacer()
+	void Application::PaceFrame(bool paced)
 	{
 		// Measure the total duration of the current frame (update + render)
 		frameTime.current = SDL_GetTicksNS();
 		frameTime.frame = frameTime.current - frameTime.previous;
 		frameTime.previous = frameTime.current;
 
+		if (paced)
+		{
+			// the frame pacer started this frame on the display's cadence: no time-based wait
+			framePacer.OnFrameEnd(frameTime.current);
+		}
 		// If the frame was faster than the target frame time, delay to cap FPS
-		if (frameTime.frame < frameTime.target)
+		else if (frameTime.frame < frameTime.target)
 		{
 			// Pause for the remaining time to maintain a consistent frame rate
-			SDL_DelayPrecise(frameTime.target - frameTime.frame);
+			FrameWaitUntil(frameWait, frameTime.previous + (frameTime.target - frameTime.frame));
 
 			// Measure the actual time spent waiting and add it to frameTime
 			frameTime.current = SDL_GetTicksNS();
@@ -947,6 +954,14 @@ namespace lime
 
 	bool Application::Update()
 	{
+		// start the frame so render and swap land just before the next compositor boundary
+		bool paced = false;
+
+		if (!background)
+		{
+			paced = framePacer.WaitFrameStart(frameTime.target);
+		}
+
 		SDL_Event event;
 
 		while (SDL_PollEvent(&event))
@@ -967,7 +982,7 @@ namespace lime
 			RenderFrame();
 		}
 
-		FramePacer();
+		PaceFrame(paced);
 
 		return active;
 	}
@@ -1054,7 +1069,7 @@ namespace lime
 
 				currentApplication->RenderFrame();
 
-				currentApplication->FramePacer();
+				currentApplication->PaceFrame(false);
 
 				return false;
 			}

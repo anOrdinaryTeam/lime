@@ -37,8 +37,8 @@ class Window
 
 	/**
 		How frames are paced against the display refresh (Codename Engine API).
-		See `WindowFramePacerMode`: without a native pacer, `LOCKED` caps `frameRate`
-		at the display refresh rate and the other modes keep the frame rate cap.
+		See `WindowFramePacerMode`. The native pacer is active on Windows; elsewhere the
+		mode is stored and the frame rate cap alone controls frame timing.
 	**/
 	public var framePacerMode(get, set):WindowFramePacerMode;
 
@@ -378,13 +378,9 @@ class Window
 
 	@:noCompletion private function set_framePacerMode(value:WindowFramePacerMode):WindowFramePacerMode
 	{
-		__framePacerMode = value;
-
-		if (value == LOCKED)
+		if (__backend.setFramePacerMode(value))
 		{
-			final mode = displayMode;
-			if (mode != null && mode.refreshRate > 0)
-				frameRate = mode.refreshRate;
+			__framePacerMode = value;
 		}
 
 		return __framePacerMode;

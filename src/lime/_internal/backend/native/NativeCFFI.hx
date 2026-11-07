@@ -147,6 +147,7 @@ class NativeCFFI
 	private static var lime_gesture_event_manager_register = new cpp.Callable<cpp.Object->cpp.Object->cpp.Void>(cpp.Prime._loadPrime("lime", "lime_gesture_event_manager_register", "oov", false));
 	private static var lime_window_alert = new cpp.Callable<cpp.Object->Int->String->String->cpp.Object->Int>(cpp.Prime._loadPrime("lime", "lime_window_alert", "oissoi", false));
 	private static var lime_window_set_vsync_mode = new cpp.Callable<cpp.Object->Int->Bool>(cpp.Prime._loadPrime("lime", "lime_window_set_vsync_mode", "oib", false));
+	private static var lime_window_set_frame_pacer_mode = new cpp.Callable<cpp.Object->Int->Bool>(cpp.Prime._loadPrime("lime", "lime_window_set_frame_pacer_mode", "oib", false));
 	private static var lime_window_close = new cpp.Callable<cpp.Object->cpp.Void>(cpp.Prime._loadPrime("lime", "lime_window_close", "ov", false));
 	private static var lime_window_context_flip = new cpp.Callable<cpp.Object->cpp.Void>(cpp.Prime._loadPrime("lime", "lime_window_context_flip", "ov", false));
 	private static var lime_window_context_make_current = new cpp.Callable<cpp.Object->cpp.Void>(cpp.Prime._loadPrime("lime", "lime_window_context_make_current", "ov", false));
@@ -317,6 +318,7 @@ class NativeCFFI
 	private static var lime_gesture_event_manager_register = CFFI.load("lime", "lime_gesture_event_manager_register", 2);
 	private static var lime_window_alert = CFFI.load("lime", "lime_window_alert", 5);
 	private static var lime_window_set_vsync_mode = CFFI.load("lime", "lime_window_set_vsync_mode", 2);
+	private static var lime_window_set_frame_pacer_mode = CFFI.load("lime", "lime_window_set_frame_pacer_mode", 2);
 	private static var lime_window_close = CFFI.load("lime", "lime_window_close", 1);
 	private static var lime_window_context_flip = CFFI.load("lime", "lime_window_context_flip", 1);
 	private static var lime_window_context_make_current = CFFI.load("lime", "lime_window_context_make_current", 1);

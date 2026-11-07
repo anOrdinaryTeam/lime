@@ -3,8 +3,8 @@ package lime.ui;
 /**
 	How the frame pacer aligns presents with the display refresh (Codename Engine API).
 
-	Shadow's lime has no native frame pacer: `OFF`, `AUTO` and `ADAPTIVE` leave timing to
-	the frame rate cap, and `LOCKED` caps the frame rate at the display refresh rate.
+	The native pacer (Windows, from Codename Engine's lime) aligns frames with the
+	compositor; on other platforms every mode leaves timing to the frame rate cap.
 **/
 #if (haxe_ver >= 4.0) enum #else @:enum #end abstract WindowFramePacerMode(Int) from Int to Int from UInt to UInt
 {
