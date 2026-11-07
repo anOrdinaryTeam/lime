@@ -152,6 +152,8 @@ import haxe.ds.ObjectMap;
 		{
 			Log.error("Object has already been released");
 		}
+		#else
+		if (object == null || !__pool.exists(object)) return;
 		#end
 
 		activeObjects--;

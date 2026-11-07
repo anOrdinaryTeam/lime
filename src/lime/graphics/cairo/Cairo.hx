@@ -11,8 +11,8 @@ import lime.text.Glyph;
 @:access(lime._internal.backend.native.NativeCFFI)
 class Cairo
 {
-	public static var version(get, null):Int;
-	public static var versionString(get, null):String;
+	public static var version(get, never):Int;
+	public static var versionString(get, never):String;
 
 	public var antialias(get, set):CairoAntialias;
 	public var currentPoint(get, never):Vector2;
@@ -29,7 +29,7 @@ class Cairo
 	public var matrix(get, set):Matrix3;
 	public var miterLimit(get, set):Float;
 	public var source(get, set):CairoPattern;
-	public var target(get, null):CairoSurface;
+	public var target(get, never):CairoSurface;
 	public var tolerance(get, set):Float;
 	public var userData:Dynamic;
 

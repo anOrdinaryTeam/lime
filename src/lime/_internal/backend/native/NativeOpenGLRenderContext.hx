@@ -602,6 +602,9 @@ class NativeOpenGLRenderContext
 	public var DYNAMIC_COPY(get, never):Int;
 	public var DEPTH_COMPONENT32F(get, never):Int;
 	public var DEPTH32F_STENCIL8(get, never):Int;
+	public var MAJOR_VERSION(get, never):Int;
+	public var MINOR_VERSION(get, never):Int;
+	public var NUM_EXTENSIONS(get, never):Int;
 	public var INVALID_INDEX(get, never):Int;
 	public var TIMEOUT_IGNORED(get, never):Int;
 
@@ -2312,7 +2315,7 @@ class NativeOpenGLRenderContext
 			// new enough to have glGetStringi, and fall back if that yields nothing.
 			if (version >= 3)
 			{
-				var count = getInteger(0x821D); // NUM_EXTENSIONS
+				var count = getInteger(GL.NUM_EXTENSIONS);
 
 				for (i in 0...count)
 				{
@@ -7019,6 +7022,21 @@ class NativeOpenGLRenderContext
 	@:noCompletion private inline function get_DEPTH32F_STENCIL8():Int
 	{
 		return GL.DEPTH32F_STENCIL8;
+	}
+
+	@:noCompletion private inline function get_MAJOR_VERSION():Int
+	{
+		return GL.MAJOR_VERSION;
+	}
+
+	@:noCompletion private inline function get_MINOR_VERSION():Int
+	{
+		return GL.MINOR_VERSION;
+	}
+
+	@:noCompletion private inline function get_NUM_EXTENSIONS():Int
+	{
+		return GL.NUM_EXTENSIONS;
 	}
 
 	@:noCompletion private inline function get_INVALID_INDEX():Int

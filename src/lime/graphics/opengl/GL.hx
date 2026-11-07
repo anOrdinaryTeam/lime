@@ -699,6 +699,9 @@ class GL
 	public static inline var DYNAMIC_COPY = 0x88EA;
 	public static inline var DEPTH_COMPONENT32F = 0x8CAC;
 	public static inline var DEPTH32F_STENCIL8 = 0x8CAD;
+	public static inline var MAJOR_VERSION = 0x821B;
+	public static inline var MINOR_VERSION = 0x821C;
+	public static inline var NUM_EXTENSIONS = 0x821D;
 	public static inline var INVALID_INDEX = 0xFFFFFFFF;
 	public static inline var TIMEOUT_IGNORED = -1;
 	#if lime_opengl
