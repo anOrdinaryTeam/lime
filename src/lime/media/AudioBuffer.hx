@@ -239,6 +239,176 @@ class AudioBuffer
 		#end
 	}
 
+	/**
+		Decodes a streamed buffer fully into `data` (Codename Engine API). Does nothing for
+		buffers that are already decoded. Call it before an `AudioSource` plays the buffer:
+		the stream's decoder is released.
+	**/
+	public function load():Void
+	{
+		#if (lime_cffi && lime_miniaudio && !macro && cpp)
+		if (__srcMADecoder == null || (data != null && data.length > 0))
+			return;
+
+		final decoder = __srcMADecoder;
+		decoder.seek_to_pcm_frame(0);
+
+		// releases the decoder whether it succeeds or not
+		final loaded = __createFromMADecoder(decoder, false);
+		__srcMADecoder = null;
+
+		if (loaded != null)
+		{
+			frames = loaded.frames;
+			sampleRate = loaded.sampleRate;
+			channels = loaded.channels;
+			format = loaded.format;
+			data = loaded.data;
+		}
+		#end
+	}
+
+	/**
+		Same as `load()`, on a background thread (Codename Engine API).
+
+		@param onLoad Called with this buffer once it is decoded.
+		@param onError Called if decoding fails.
+	**/
+	public function loadAsync(?onLoad:AudioBuffer->Void, ?onError:String->Void):Void
+	{
+		final future = new Future<AudioBuffer>(function()
+		{
+			load();
+			return this;
+		}, true);
+
+		future.onComplete(function(buffer)
+		{
+			if (onError != null && !buffer.isValid())
+				onError("Cannot decode audio buffer");
+			else if (onLoad != null)
+				onLoad(buffer);
+		});
+
+		future.onError(function(error)
+		{
+			if (onError != null)
+				onError(Std.string(error));
+		});
+	}
+
+	/**
+		Creates an `AudioBuffer` from Base64-encoded audio data, with or without a
+		`data:<type>;base64,` prefix (Codename Engine API).
+
+		@param base64String The Base64-encoded audio data.
+		@param stream Whether to use streaming instead of directly decoding all the audio data.
+	**/
+	public static function fromBase64(base64String:String, ?stream:Bool = false):AudioBuffer
+	{
+		if (base64String == null)
+			return null;
+
+		final comma = base64String.indexOf(",");
+		if (comma > -1)
+			base64String = base64String.substring(comma + 1);
+
+		var bytes:Bytes = null;
+		try
+		{
+			bytes = haxe.crypto.Base64.decode(base64String);
+		}
+		catch (e:Dynamic)
+		{
+			Log.error("Invalid Base64 audio data");
+			return null;
+		}
+
+		return fromBytes(bytes, stream);
+	}
+
+	/**
+		Same as `fromBytes(bytes, true)` (Codename Engine API).
+	**/
+	public static inline function fromBytesStream(bytes:Bytes):AudioBuffer
+	{
+		return fromBytes(bytes, true);
+	}
+
+	/**
+		Same as `fromFile(path, true)` (Codename Engine API).
+	**/
+	public static inline function fromFileStream(path:String):AudioBuffer
+	{
+		return fromFile(path, true);
+	}
+
+	/**
+		Creates an `AudioBuffer` from the first of `paths` that loads (Codename Engine API).
+
+		@param paths The file paths to try, in order.
+		@param stream Whether to use streaming instead of directly decoding all the audio data.
+	**/
+	public static function fromFiles(paths:Array<String>, ?stream:Bool = false):AudioBuffer
+	{
+		if (paths == null)
+			return null;
+
+		for (path in paths)
+		{
+			final buffer = fromFile(path, stream);
+			if (buffer != null)
+				return buffer;
+		}
+
+		return null;
+	}
+
+	/**
+		Same as `fromFiles(paths, true)` (Codename Engine API).
+	**/
+	public static inline function fromFilesStream(paths:Array<String>):AudioBuffer
+	{
+		return fromFiles(paths, true);
+	}
+
+	/**
+		Asynchronously loads an `AudioBuffer` from the first of `paths` that loads (Codename Engine API).
+
+		@param paths The file paths to try, in order.
+		@return A `Future` that resolves to the loaded `AudioBuffer`, or null if none loaded.
+	**/
+	public static function loadFromFiles(paths:Array<String>):Future<AudioBuffer>
+	{
+		if (paths == null || paths.length == 0)
+			return Future.withValue(null);
+
+		final promise = new lime.app.Promise<AudioBuffer>();
+		var index = 0;
+
+		function next():Void
+		{
+			if (index >= paths.length)
+			{
+				promise.complete(null);
+				return;
+			}
+
+			final future = loadFromFile(paths[index++]);
+			future.onComplete(function(buffer)
+			{
+				if (buffer != null)
+					promise.complete(buffer);
+				else
+					next();
+			});
+			future.onError(function(_) next());
+		}
+
+		next();
+		return promise.future;
+	}
+
 	@:noCompletion private static function __getCodec(bytes:Bytes):String
 	{
 		var signature:String = null;

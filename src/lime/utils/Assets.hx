@@ -157,6 +157,60 @@ class Assets
 	}
 
 	/**
+		Gets a streamed `AudioBuffer`, decoded while it plays (Codename Engine API).
+	**/
+	public static function getAudioBufferStream(id:String, useCache:Bool = true):AudioBuffer
+	{
+		#if (tools && !display && !macro)
+		var type:AssetType = SOUND;
+
+		if (useCache && cache.enabled)
+		{
+			var audio = cache.audio.get(id);
+
+			if (isValidAudio(audio))
+			{
+				return audio;
+			}
+		}
+
+		var symbol = new LibrarySymbol(id);
+
+		if (symbol.library != null)
+		{
+			if (symbol.exists(type))
+			{
+				if (symbol.isLocal(type))
+				{
+					var asset = symbol.library.getAudioBufferStream(symbol.symbolName);
+
+					if (useCache && cache.enabled)
+					{
+						cache.set(id, type, asset);
+					}
+
+					return asset;
+				}
+				else
+				{
+					Log.error(type + " asset \"" + id + "\" exists, but only asynchronously");
+				}
+			}
+			else
+			{
+				Log.error("There is no " + type + " asset with an ID of \"" + id + "\"");
+			}
+		}
+		else
+		{
+			Log.error(__libraryNotFound(symbol.libraryName));
+		}
+		#end
+
+		return null;
+	}
+
+	/**
 	 * Gets an instance of an embedded binary asset
 	 * @usage		var bytes = Assets.getBytes("file.zip");
 	 * @param	id		The ID or asset path for the file
@@ -400,6 +454,53 @@ class Assets
 	public static function loadAudioBuffer(id:String, useCache:Bool = true):Future<AudioBuffer>
 	{
 		return cast loadAsset(id, SOUND, useCache);
+	}
+
+	/**
+		Loads a streamed `AudioBuffer`, decoded while it plays (Codename Engine API).
+	**/
+	public static function loadAudioBufferStream(id:String, useCache:Bool = true):Future<AudioBuffer>
+	{
+		#if (tools && !display && !macro)
+		var type:AssetType = SOUND;
+
+		if (useCache && cache.enabled)
+		{
+			var audio = cache.audio.get(id);
+
+			if (isValidAudio(audio))
+			{
+				return Future.withValue(audio);
+			}
+		}
+
+		var symbol = new LibrarySymbol(id);
+
+		if (symbol.library != null)
+		{
+			if (symbol.exists(type))
+			{
+				var future = symbol.library.loadAudioBufferStream(symbol.symbolName);
+
+				if (useCache && cache.enabled)
+				{
+					future.onComplete(function(asset) cache.set(id, type, asset));
+				}
+
+				return future;
+			}
+			else
+			{
+				return cast Future.withError("There is no " + type + " asset with an ID of \"" + id + "\"");
+			}
+		}
+		else
+		{
+			return cast Future.withError(__libraryNotFound(symbol.libraryName));
+		}
+		#else
+		return null;
+		#end
 	}
 
 	public static function loadBytes(id:String):Future<Bytes>

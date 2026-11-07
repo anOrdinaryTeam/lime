@@ -177,6 +177,25 @@ class AssetLibrary
 		}
 	}
 
+	/**
+		Same as `getAudioBuffer`, but the buffer is decoded while it plays (Codename Engine API).
+	**/
+	public function getAudioBufferStream(id:String):AudioBuffer
+	{
+		if (cachedAudioBuffers.exists(id))
+		{
+			return cachedAudioBuffers.get(id);
+		}
+		else if (classTypes.exists(id))
+		{
+			return AudioBuffer.fromBytesStream(cast(Type.createInstance(classTypes.get(id), []), Bytes));
+		}
+		else
+		{
+			return AudioBuffer.fromFileStream(getPath(id));
+		}
+	}
+
 	public function getBytes(id:String):Bytes
 	{
 		if (cachedBytes.exists(id))
@@ -425,6 +444,15 @@ class AssetLibrary
 		{
 			return AudioBuffer.loadFromFile(getPath(id));
 		}
+	}
+
+	/**
+		Same as `loadAudioBuffer`, but the buffer is decoded while it plays (Codename Engine API).
+		Opening a stream is quick, so it completes right away.
+	**/
+	public function loadAudioBufferStream(id:String):Future<AudioBuffer>
+	{
+		return Future.withValue(getAudioBufferStream(id));
 	}
 
 	public function loadBytes(id:String):Future<Bytes>
