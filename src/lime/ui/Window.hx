@@ -35,6 +35,13 @@ class Window
 	**/
 	public var frameRate(get, set):Float;
 
+	/**
+		How frames are paced against the display refresh (Codename Engine API).
+		See `WindowFramePacerMode`: without a native pacer, `LOCKED` caps `frameRate`
+		at the display refresh rate and the other modes keep the frame rate cap.
+	**/
+	public var framePacerMode(get, set):WindowFramePacerMode;
+
 	public var fullscreen(get, set):Bool;
 	public var height(get, set):Int;
 	public var nativeHeight(get, null):Int;
@@ -165,6 +172,7 @@ class Window
 	@:noCompletion private var __hidden:Bool;
 	@:noCompletion private var __maximized:Bool;
 	@:noCompletion private var __minimized:Bool;
+	@:noCompletion private var __framePacerMode:WindowFramePacerMode = AUTO;
 	@:noCompletion private var __resizable:Bool;
 	@:noCompletion private var __scale:Float;
 	@:noCompletion private var __displayScale:Float;
@@ -199,6 +207,7 @@ class Window
 		__resizable = Reflect.hasField(__attributes, "resizable") ? __attributes.resizable : false;
 		__maximized = Reflect.hasField(__attributes, "maximized") ? __attributes.maximized : false;
 		__minimized = Reflect.hasField(__attributes, "minimized") ? __attributes.minimized : false;
+		__framePacerMode = Reflect.hasField(__attributes, "framePacerMode") ? __attributes.framePacerMode : AUTO;
 
 		id = -1;
 
@@ -360,6 +369,25 @@ class Window
 	@:noCompletion private inline function set_frameRate(value:Float):Float
 	{
 		return __backend.setFrameRate(value);
+	}
+
+	@:noCompletion private inline function get_framePacerMode():WindowFramePacerMode
+	{
+		return __framePacerMode;
+	}
+
+	@:noCompletion private function set_framePacerMode(value:WindowFramePacerMode):WindowFramePacerMode
+	{
+		__framePacerMode = value;
+
+		if (value == LOCKED)
+		{
+			final mode = displayMode;
+			if (mode != null && mode.refreshRate > 0)
+				frameRate = mode.refreshRate;
+		}
+
+		return __framePacerMode;
 	}
 
 	@:noCompletion private inline function get_fullscreen():Bool

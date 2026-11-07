@@ -7,16 +7,20 @@ import cpp.Pointer;
 import haxe.Int64;
 import haxe.MainLoop;
 
+import lime.media.AudioEffect;
 import lime.media.AudioManager;
 import lime.media.AudioSource;
 import lime.media.miniaudio.MAAudioBuffer;
 import lime.media.miniaudio.MAAudioBufferConfig;
 import lime.media.miniaudio.MAAudioRingBuffer;
+import lime.media.miniaudio.MANode;
 import lime.media.miniaudio.MASound;
 import lime.media.miniaudio.MASoundConfig;
 import lime.media.miniaudio.nodes.MAPeakMeterNode;
 
 @:access(lime.media.AudioBuffer)
+@:access(lime.media.AudioEffect)
+@:access(lime.media.AudioSource)
 class NativeAudioSource
 {
 	// Sources with a sound, polled on the main thread for sounds that reached their end.
@@ -29,7 +33,10 @@ class NativeAudioSource
 	private var handle:MASound;
 	private var meter:MAPeakMeterNode;
 	private var loops:Int = 0;
+	private var loopTime:Float = 0;
 	private var parent:AudioSource;
+	// effects currently wired between the sound and the meter, in order
+	private var chainedEffects:Array<AudioEffect> = [];
 
 	public function new(parent:AudioSource):Void
 	{
@@ -46,6 +53,12 @@ class NativeAudioSource
 			handle.uninit();
 			handle = null;
 		}
+
+		// effect nodes go after the sound feeding them; init() makes new ones
+		if (parent.__effects != null)
+			for (effect in parent.__effects)
+				effect.__releaseNode(parent);
+		chainedEffects = [];
 
 		// after the sound, which is attached to it
 		if (meter != null)
@@ -124,6 +137,11 @@ class NativeAudioSource
 				for (rb in postRingBuffers)
 					handle.add_ring_buffer(rb, true);
 
+				updateEffects();
+
+				if (parent.offset > 0)
+					setCurrentTime(parent.offset);
+
 				if (!activeSources.contains(this))
 					activeSources.push(this);
 
@@ -163,7 +181,10 @@ class NativeAudioSource
 		{
 			handle.stop();
 
-			handle.seek_to_pcm_frame(0);
+			if (parent.offset > 0)
+				setCurrentTime(parent.offset);
+			else
+				handle.seek_to_pcm_frame(0);
 		}
 	}
 
@@ -211,14 +232,93 @@ class NativeAudioSource
 			handle.remove_ring_buffer(rb, true);
 	}
 
+	/**
+		Wires the source's active effects between the sound and its meter, in order.
+	**/
+	public function updateEffects():Void
+	{
+		if (handle == null || meter == null || AudioManager.engine == null)
+			return;
+
+		final channels = AudioManager.engine.get_channels();
+		final sampleRate = AudioManager.engine.get_sample_rate();
+
+		final effects = parent.__effects != null ? parent.__effects : [];
+		final chain:Array<AudioEffect> = [];
+		var previous:MANode = cast handle;
+
+		for (effect in effects)
+		{
+			if (effect.bypass)
+				continue;
+
+			final node = effect.__getNode(parent, channels, sampleRate);
+			if (node == null)
+				continue;
+
+			previous.attach_output_bus(0, node, 0);
+			previous = node;
+			chain.push(effect);
+		}
+
+		previous.attach_output_bus(0, meter, 0);
+
+		// unwire bypassed effects and release removed ones
+		for (effect in chainedEffects)
+		{
+			if (!effects.contains(effect))
+				effect.__releaseNode(parent);
+			else if (!chain.contains(effect))
+			{
+				final node = effect.__nodes.get(parent);
+				if (node != null)
+					node.detach_all_output_buses();
+			}
+		}
+
+		chainedEffects = chain;
+	}
+
+	/**
+		Routes the sound straight to its meter again, leaving every effect node unwired.
+	**/
+	public function detachEffects():Void
+	{
+		if (handle == null || meter == null)
+			return;
+
+		(cast handle : MANode).attach_output_bus(0, meter, 0);
+
+		for (effect in chainedEffects)
+		{
+			final node = effect.__nodes.get(parent);
+			if (node != null)
+				node.detach_all_output_buses();
+		}
+
+		chainedEffects = [];
+	}
+
 	// Event Handlers
 
 	private static function pollAtEnd():Void
 	{
 		for (source in activeSources.copy())
 		{
-			if (source.handle != null && source.handle.take_at_end() > 0)
+			if (source.handle == null)
+				continue;
+
+			if (source.handle.take_at_end() > 0)
+			{
 				source.sound_atEnd();
+			}
+			else if (source.parent.__length != null && source.handle.is_playing()
+				&& source.getCurrentTime() >= source.parent.offset + source.parent.__length)
+			{
+				// an explicit length ends the sound early
+				source.handle.stop();
+				source.sound_atEnd();
+			}
 		}
 	}
 
@@ -228,6 +328,8 @@ class NativeAudioSource
 		{
 			loops--;
 			stop();
+			if (loopTime > 0)
+				setCurrentTime(parent.offset + loopTime);
 			play();
 			return;
 		}
@@ -309,6 +411,16 @@ class NativeAudioSource
 	public function getLoops():Int
 	{
 		return loops;
+	}
+
+	public function getLoopTime():Float
+	{
+		return loopTime;
+	}
+
+	public function setLoopTime(value:Float):Float
+	{
+		return loopTime = value;
 	}
 
 	public function setLoops(value:Int):Int

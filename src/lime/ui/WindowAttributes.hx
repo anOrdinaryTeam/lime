@@ -17,6 +17,11 @@ typedef WindowAttributes =
 	@:optional public var hidden:Bool;
 	@:optional public var maximized:Bool;
 	@:optional public var minimized:Bool;
+
+	/**
+		Frame pacing mode (Codename Engine API), see `WindowFramePacerMode`.
+	**/
+	@:optional public var framePacerMode:WindowFramePacerMode;
 	@:optional public var parameters:Dynamic;
 	@:optional public var resizable:Bool;
 	@:optional public var title:String;
