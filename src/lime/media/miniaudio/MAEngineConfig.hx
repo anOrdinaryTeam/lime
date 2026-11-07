@@ -22,6 +22,11 @@ class MAEngineConfig
 	public var noAutoStart:Bool;
 	public var noDevice:Bool;
 	public var noClip:Bool;
+
+	/**
+		Name of the playback device to open, or null for the default device.
+	**/
+	public var playbackDeviceName:String;
 	public var onProcess:(pFramesOut:CFFIPointer, frameCount:Dynamic) -> Void;
 
 	public function new():Void
@@ -38,6 +43,7 @@ class MAEngineConfig
 		noAutoStart = false;
 		noDevice = false;
 		noClip = false;
+		playbackDeviceName = null;
 		onProcess = null;
 	}
 
@@ -56,6 +62,7 @@ class MAEngineConfig
 			noAutoStart: noAutoStart,
 			noDevice: noDevice,
 			noClip: noClip,
+			playbackDeviceName: playbackDeviceName,
 			onProcess: onProcess
 		}
 	}

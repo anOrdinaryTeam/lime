@@ -1697,6 +1697,10 @@ class NativeCFFI
 	private static var lime_ma_engine_get_channels = new cpp.Callable<cpp.Object->Int>(cpp.Prime._loadPrime("lime", "lime_ma_engine_get_channels", "oi", false));
 	private static var lime_ma_engine_get_sample_rate = new cpp.Callable<cpp.Object->Int>(cpp.Prime._loadPrime("lime", "lime_ma_engine_get_sample_rate", "oi", false));
 	private static var lime_ma_engine_get_latency = new cpp.Callable<cpp.Object->Float>(cpp.Prime._loadPrime("lime", "lime_ma_engine_get_latency", "od", false));
+	private static var lime_ma_engine_get_device_names = new cpp.Callable<cpp.Object->Bool->cpp.Object>(cpp.Prime._loadPrime("lime", "lime_ma_engine_get_device_names", "obo", false));
+	private static var lime_ma_engine_get_default_device_name = new cpp.Callable<cpp.Object->Bool->cpp.Object>(cpp.Prime._loadPrime("lime", "lime_ma_engine_get_default_device_name", "obo", false));
+	private static var lime_ma_engine_get_device_name = new cpp.Callable<cpp.Object->cpp.Object>(cpp.Prime._loadPrime("lime", "lime_ma_engine_get_device_name", "oo", false));
+	private static var lime_ma_engine_take_rerouted = new cpp.Callable<cpp.Object->Int>(cpp.Prime._loadPrime("lime", "lime_ma_engine_take_rerouted", "oi", false));
 	private static var lime_ma_engine_start = new cpp.Callable<cpp.Object->Int>(cpp.Prime._loadPrime("lime", "lime_ma_engine_start", "oi", false));
 	private static var lime_ma_engine_stop = new cpp.Callable<cpp.Object->Int>(cpp.Prime._loadPrime("lime", "lime_ma_engine_stop", "oi", false));
 	private static var lime_ma_engine_set_volume = new cpp.Callable<cpp.Object->Float->Int>(cpp.Prime._loadPrime("lime", "lime_ma_engine_set_volume", "odi", false));
@@ -1882,6 +1886,10 @@ class NativeCFFI
 	private static var lime_ma_engine_get_channels:Dynamic->Int = CFFI.load("lime", "lime_ma_engine_get_channels", 1);
 	private static var lime_ma_engine_get_sample_rate:Dynamic->Int = CFFI.load("lime", "lime_ma_engine_get_sample_rate", 1);
 	private static var lime_ma_engine_get_latency:Dynamic->Float = CFFI.load("lime", "lime_ma_engine_get_latency", 1);
+	private static var lime_ma_engine_get_device_names:Dynamic->Bool->Dynamic = CFFI.load("lime", "lime_ma_engine_get_device_names", 2);
+	private static var lime_ma_engine_get_default_device_name:Dynamic->Bool->Dynamic = CFFI.load("lime", "lime_ma_engine_get_default_device_name", 2);
+	private static var lime_ma_engine_get_device_name:Dynamic->Dynamic = CFFI.load("lime", "lime_ma_engine_get_device_name", 1);
+	private static var lime_ma_engine_take_rerouted:Dynamic->Int = CFFI.load("lime", "lime_ma_engine_take_rerouted", 1);
 	private static var lime_ma_engine_start:Dynamic->Int = CFFI.load("lime", "lime_ma_engine_start", 1);
 	private static var lime_ma_engine_stop:Dynamic->Int = CFFI.load("lime", "lime_ma_engine_stop", 1);
 	private static var lime_ma_engine_set_volume:Dynamic->Float->Int = CFFI.load("lime", "lime_ma_engine_set_volume", 2);

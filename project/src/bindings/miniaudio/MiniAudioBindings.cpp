@@ -2,6 +2,7 @@
 #include <utils/Bytes.h>
 #include <utils/File.h>
 #include <atomic>
+#include <cstring>
 #include <vector>
 #include <cmath>
 #ifdef IPHONE
@@ -1437,7 +1438,40 @@ namespace lime
 	{
 		AutoGCRoot *onProcess = NULL;
 		ma_mastering_limiter *limiter = NULL;
+
+		// own context when the engine opens a device chosen by name
+		ma_context *context = NULL;
+		ma_device_id playbackId;
+
+		// default device changes since the last lime_ma_engine_take_rerouted
+		std::atomic<int> rerouted{0};
 	};
+
+	static void lime_ma_free_context(ma_context *context)
+	{
+		if (context)
+		{
+			ma_context_uninit(context);
+			delete context;
+		}
+	}
+
+	// audio thread: only record the change, Haxe polls it
+	static void lime_ma_device_notification_proc(const ma_device_notification *pNotification)
+	{
+		if (pNotification == NULL || pNotification->type != ma_device_notification_type_rerouted || pNotification->pDevice == NULL)
+			return;
+
+		ma_engine *engine = (ma_engine *)pNotification->pDevice->pUserData;
+
+		if (engine == NULL)
+			return;
+
+		lime_ma_engine_process_data *data = (lime_ma_engine_process_data *)engine->pProcessUserData;
+
+		if (data)
+			data->rerouted.fetch_add(1);
+	}
 
 	static void lime_ma_engine_free_process_data(ma_engine *engine)
 	{
@@ -1456,6 +1490,8 @@ namespace lime
 				delete data->onProcess;
 
 			ma_mastering_limiter_destroy(data->limiter);
+
+			lime_ma_free_context(data->context);
 
 			delete data;
 		}
@@ -1634,6 +1670,51 @@ namespace lime
 
 		config.pProcessUserData = processData;
 		config.onProcess = lime_ma_engine_process_proc;
+		config.deviceConfig.notificationCallback = lime_ma_device_notification_proc;
+
+		// playbackDeviceName: open that device instead of the default one
+		value playbackDeviceName = val_field(pConfig, val_id("playbackDeviceName"));
+
+		if (!val_is_null(playbackDeviceName) && val_is_string(playbackDeviceName))
+		{
+			const char *wanted = val_string(playbackDeviceName);
+			ma_context *context = new ma_context();
+
+			if (wanted != NULL && ma_context_init(&config.deviceConfig.contextConfig, context) == MA_SUCCESS)
+			{
+				ma_device_info *infos = NULL;
+				ma_uint32 count = 0;
+				bool found = false;
+
+				if (ma_context_get_devices(context, &infos, &count, NULL, NULL) == MA_SUCCESS)
+				{
+					for (ma_uint32 i = 0; i < count; ++i)
+					{
+						if (strcmp(infos[i].name, wanted) == 0)
+						{
+							processData->playbackId = infos[i].id;
+							found = true;
+							break;
+						}
+					}
+				}
+
+				if (found)
+				{
+					processData->context = context;
+					config.deviceConfig.pContext = context;
+					config.deviceConfig.playback.pDeviceID = &processData->playbackId;
+				}
+				else
+				{
+					lime_ma_free_context(context);
+				}
+			}
+			else
+			{
+				delete context;
+			}
+		}
 
 		ma_engine *engine = new ma_engine();
 
@@ -1643,6 +1724,8 @@ namespace lime
 				delete processData->onProcess;
 
 			ma_mastering_limiter_destroy(processData->limiter);
+
+			lime_ma_free_context(processData->context);
 
 			delete processData;
 
@@ -1683,6 +1766,72 @@ namespace lime
 
 			delete engine;
 		}
+	}
+
+	static ma_context *lime_ma_engine_get_context(value pEngine)
+	{
+		ma_device *device = ma_engine_get_device((ma_engine *)val_data(pEngine));
+
+		return device ? ma_device_get_context(device) : NULL;
+	}
+
+	value lime_ma_engine_get_device_names(value pEngine, bool capture)
+	{
+		ma_context *context = lime_ma_engine_get_context(pEngine);
+		ma_device_info *playbackInfos = NULL, *captureInfos = NULL;
+		ma_uint32 playbackCount = 0, captureCount = 0;
+
+		if (context == NULL || ma_context_get_devices(context, &playbackInfos, &playbackCount, &captureInfos, &captureCount) != MA_SUCCESS)
+			return alloc_array(0);
+
+		ma_device_info *infos = capture ? captureInfos : playbackInfos;
+		ma_uint32 count = capture ? captureCount : playbackCount;
+
+		value result = alloc_array(count);
+
+		for (ma_uint32 i = 0; i < count; ++i)
+			val_array_set_i(result, i, alloc_string(infos[i].name));
+
+		return result;
+	}
+
+	value lime_ma_engine_get_default_device_name(value pEngine, bool capture)
+	{
+		ma_context *context = lime_ma_engine_get_context(pEngine);
+		ma_device_info *playbackInfos = NULL, *captureInfos = NULL;
+		ma_uint32 playbackCount = 0, captureCount = 0;
+
+		if (context == NULL || ma_context_get_devices(context, &playbackInfos, &playbackCount, &captureInfos, &captureCount) != MA_SUCCESS)
+			return alloc_null();
+
+		ma_device_info *infos = capture ? captureInfos : playbackInfos;
+		ma_uint32 count = capture ? captureCount : playbackCount;
+
+		for (ma_uint32 i = 0; i < count; ++i)
+		{
+			if (infos[i].isDefault)
+				return alloc_string(infos[i].name);
+		}
+
+		return alloc_null();
+	}
+
+	value lime_ma_engine_get_device_name(value pEngine)
+	{
+		ma_device *device = ma_engine_get_device((ma_engine *)val_data(pEngine));
+		char name[MA_MAX_DEVICE_NAME_LENGTH + 1];
+
+		if (device == NULL || ma_device_get_name(device, ma_device_type_playback, name, sizeof(name), NULL) != MA_SUCCESS)
+			return alloc_null();
+
+		return alloc_string(name);
+	}
+
+	int lime_ma_engine_take_rerouted(value pEngine)
+	{
+		lime_ma_engine_process_data *data = (lime_ma_engine_process_data *)((ma_engine *)val_data(pEngine))->pProcessUserData;
+
+		return data ? data->rerouted.exchange(0) : 0;
 	}
 
 	value lime_ma_engine_read_pcm_frames(value pEngine, value pFrames, value frameCount)
@@ -2608,6 +2757,10 @@ namespace lime
 	DEFINE_PRIME1(lime_ma_engine_get_channels);
 	DEFINE_PRIME1(lime_ma_engine_get_sample_rate);
 	DEFINE_PRIME1(lime_ma_engine_get_latency);
+	DEFINE_PRIME2(lime_ma_engine_get_device_names);
+	DEFINE_PRIME2(lime_ma_engine_get_default_device_name);
+	DEFINE_PRIME1(lime_ma_engine_get_device_name);
+	DEFINE_PRIME1(lime_ma_engine_take_rerouted);
 	DEFINE_PRIME1(lime_ma_engine_start);
 	DEFINE_PRIME1(lime_ma_engine_stop);
 	DEFINE_PRIME2(lime_ma_engine_set_volume);

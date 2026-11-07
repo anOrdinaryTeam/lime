@@ -299,6 +299,63 @@ class NativeAudioSource
 		chainedEffects = [];
 	}
 
+	/**
+		Releases the sound of every source before the audio engine is recreated (on another
+		device), returning what `resumeAll` needs to rebuild them.
+	**/
+	@:allow(lime.media.AudioManager)
+	private static function suspendAll():Array<SuspendedSource>
+	{
+		final states:Array<SuspendedSource> = [];
+
+		for (source in activeSources.copy())
+		{
+			if (source.handle == null)
+				continue;
+
+			states.push({
+				source: source,
+				time: source.getCurrentTime(),
+				playing: source.handle.is_playing(),
+				gain: source.getGain(),
+				pitch: source.getPitch(),
+				pan: source.getPan(),
+				preRingBuffers: source.preRingBuffers.copy(),
+				postRingBuffers: source.postRingBuffers.copy()
+			});
+
+			source.dispose();
+		}
+
+		return states;
+	}
+
+	/**
+		Rebuilds the sources released by `suspendAll` on the current audio engine.
+	**/
+	@:allow(lime.media.AudioManager)
+	private static function resumeAll(states:Array<SuspendedSource>):Void
+	{
+		for (state in states)
+		{
+			final source = state.source;
+			source.preRingBuffers = state.preRingBuffers;
+			source.postRingBuffers = state.postRingBuffers;
+			source.init();
+
+			if (source.handle == null)
+				continue;
+
+			source.setGain(state.gain);
+			source.setPitch(state.pitch);
+			source.setPan(state.pan);
+			source.setCurrentTime(state.time);
+
+			if (state.playing)
+				source.play();
+		}
+	}
+
 	// Event Handlers
 
 	private static function pollAtEnd():Void
@@ -432,4 +489,16 @@ class NativeAudioSource
 	{
 		return handle != null ? handle.is_playing() : false;
 	}
+}
+
+private typedef SuspendedSource =
+{
+	source:NativeAudioSource,
+	time:Float,
+	playing:Bool,
+	gain:Float,
+	pitch:Float,
+	pan:Float,
+	preRingBuffers:Array<MAAudioRingBuffer>,
+	postRingBuffers:Array<MAAudioRingBuffer>
 }

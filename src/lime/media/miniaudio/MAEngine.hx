@@ -135,6 +135,55 @@ abstract MAEngine(CFFIPointer) from CFFIPointer to CFFIPointer
 		#end
 	}
 
+	/**
+		Names of the playback (or capture) devices of the engine's audio context.
+	**/
+	public function get_device_names(capture:Bool):Array<String>
+	{
+		#if (lime_cffi && lime_miniaudio && !macro)
+		final names:Array<String> = NativeCFFI.lime_ma_engine_get_device_names(this, capture);
+		return names != null ? names : [];
+		#else
+		return [];
+		#end
+	}
+
+	/**
+		Name of the default playback (or capture) device, or null.
+	**/
+	public function get_default_device_name(capture:Bool):String
+	{
+		#if (lime_cffi && lime_miniaudio && !macro)
+		return NativeCFFI.lime_ma_engine_get_default_device_name(this, capture);
+		#else
+		return null;
+		#end
+	}
+
+	/**
+		Name of the playback device the engine outputs to, or null.
+	**/
+	public function get_device_name():String
+	{
+		#if (lime_cffi && lime_miniaudio && !macro)
+		return NativeCFFI.lime_ma_engine_get_device_name(this);
+		#else
+		return null;
+		#end
+	}
+
+	/**
+		How many times the device followed a new default device since the last call.
+	**/
+	public function take_rerouted():Int
+	{
+		#if (lime_cffi && lime_miniaudio && !macro)
+		return NativeCFFI.lime_ma_engine_take_rerouted(this);
+		#else
+		return 0;
+		#end
+	}
+
 	public function start():MAResult
 	{
 		#if (lime_cffi && lime_miniaudio && !macro)
