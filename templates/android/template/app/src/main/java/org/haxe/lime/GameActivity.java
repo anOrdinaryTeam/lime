@@ -16,6 +16,7 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.KeyCharacterMap;
 import android.view.KeyEvent;
+import android.view.OrientationEventListener;
 import android.view.View;
 import android.view.WindowInsets;
 import android.view.WindowManager;
@@ -57,6 +58,9 @@ public class GameActivity extends SDLActivity {
 	private static List<Extension> extensions;
 	private static DisplayMetrics metrics;
 	private static DisplayCutout displayCutout;
+	private static OrientationEventListener orientationListener;
+	private static HaxeObject deviceOrientationListener;
+	private static int deviceOrientation = SDL_ORIENTATION_UNKNOWN;
 
 	public Handler handler;
 
@@ -119,10 +123,76 @@ public class GameActivity extends SDLActivity {
 	}
 
 
+	/**
+		Sets the Haxe object told about physical device orientation changes
+		(onOrientationChanged(int), SDL orientation values), Codename Engine API.
+	**/
+	public static void setDeviceOrientationListener (HaxeObject object) {
+
+		deviceOrientationListener = object;
+
+		if (deviceOrientationListener != null) {
+
+			deviceOrientationListener.call1 ("onOrientationChanged", deviceOrientation);
+
+		}
+
+	}
+
+
+	public static int getDeviceOrientation () {
+
+		return deviceOrientation;
+
+	}
+
+
 	@SuppressWarnings("deprecation")
 	protected void onCreate (Bundle state) {
 
 		super.onCreate (state);
+
+		orientationListener = new OrientationEventListener (this) {
+
+			public void onOrientationChanged (int degrees) {
+
+				if (degrees == OrientationEventListener.ORIENTATION_UNKNOWN) return;
+
+				int orientation = SDL_ORIENTATION_UNKNOWN;
+
+				if (degrees >= 315 || degrees < 45) {
+
+					orientation = SDL_ORIENTATION_PORTRAIT;
+
+				} else if (degrees < 135) {
+
+					orientation = SDL_ORIENTATION_LANDSCAPE_FLIPPED;
+
+				} else if (degrees < 225) {
+
+					orientation = SDL_ORIENTATION_PORTRAIT_FLIPPED;
+
+				} else {
+
+					orientation = SDL_ORIENTATION_LANDSCAPE;
+
+				}
+
+				if (deviceOrientation != orientation) {
+
+					deviceOrientation = orientation;
+
+					if (deviceOrientationListener != null) {
+
+						deviceOrientationListener.call1 ("onOrientationChanged", deviceOrientation);
+
+					}
+
+				}
+
+			}
+
+		};
 
 		audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
 
@@ -203,6 +273,8 @@ public class GameActivity extends SDLActivity {
 
 	@Override protected void onPause () {
 
+		if (orientationListener != null) orientationListener.disable ();
+
 		super.onPause ();
 
 		if (audioManager != null) {
@@ -255,6 +327,8 @@ public class GameActivity extends SDLActivity {
 	@Override protected void onResume () {
 
 		super.onResume ();
+
+		if (orientationListener != null && orientationListener.canDetectOrientation ()) orientationListener.enable ();
 
 		requestAudioFocus();
 

@@ -71,6 +71,11 @@ class NativeApplication
 	private var parent:Application;
 	private var toggleFullscreen:Bool;
 
+	#if android
+	private var deviceOrientation:Orientation = UNKNOWN;
+	private var deviceOrientationListener:OrientationChangeListener;
+	#end
+
 	private static function __init__()
 	{
 		#if (lime_cffi && !macro)
@@ -83,6 +88,14 @@ class NativeApplication
 		this.parent = parent;
 		pauseTimer = -1;
 		toggleFullscreen = true;
+
+		#if (android && !macro && lime_cffi)
+		// physical device orientation, also when the display orientation is locked
+		var setDeviceOrientationListener = JNI.createStaticMethod("org/haxe/lime/GameActivity", "setDeviceOrientationListener",
+			"(Lorg/haxe/lime/HaxeObject;)V");
+		deviceOrientationListener = new OrientationChangeListener(handleJNIOrientationEvent);
+		setDeviceOrientationListener(deviceOrientationListener);
+		#end
 
 		#if (!macro && lime_cffi)
 		handle = NativeCFFI.lime_application_create();
@@ -184,8 +197,29 @@ class NativeApplication
 
 	public function getDeviceOrientation():Orientation
 	{
+		#if android
+		return deviceOrientation;
+		#elseif ios
+		// the display follows the device on iOS unless the app locks its orientation
+		final display = System.getDisplay(0);
+		return display != null ? display.orientation : UNKNOWN;
+		#else
 		return UNKNOWN;
+		#end
 	}
+
+	#if android
+	private function handleJNIOrientationEvent(newOrientation:Int):Void
+	{
+		var orientation:Orientation = cast newOrientation;
+
+		if (orientation == deviceOrientation)
+			return;
+
+		deviceOrientation = orientation;
+		parent.onDeviceOrientationChange.dispatch(orientation);
+	}
+	#end
 
 	private function handleApplicationEvent():Void
 	{
@@ -1225,3 +1259,21 @@ private enum abstract OrientationEventType(Int)
 	var DISPLAY_ORIENTATION_CHANGE = 0;
 	var DEVICE_ORIENTATION_CHANGE = 1;
 }
+
+#if android
+private class OrientationChangeListener implements lime.system.JNI.JNISafety
+{
+	private var callback:Int->Void;
+
+	public function new(callback:Int->Void)
+	{
+		this.callback = callback;
+	}
+
+	@:runOnMainThread
+	public function onOrientationChanged(orientation:Int):Void
+	{
+		callback(orientation);
+	}
+}
+#end
