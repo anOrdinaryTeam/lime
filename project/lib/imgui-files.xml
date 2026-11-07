@@ -1,0 +1,28 @@
+<xml>
+
+	<files id="native-toolkit-imgui">
+
+		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/sdl/include" />
+		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/imgui" />
+		<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/imgui/backends" />
+
+		<depend name="${NATIVE_TOOLKIT_PATH}/imgui/imconfig.h" />
+		<depend name="${NATIVE_TOOLKIT_PATH}/imgui/imgui.h" />
+		<depend name="${NATIVE_TOOLKIT_PATH}/imgui/imgui_internal.h" />
+
+		<file name="${NATIVE_TOOLKIT_PATH}/imgui/imgui.cpp" />
+		<file name="${NATIVE_TOOLKIT_PATH}/imgui/imgui_demo.cpp" />
+		<file name="${NATIVE_TOOLKIT_PATH}/imgui/imgui_draw.cpp" />
+		<file name="${NATIVE_TOOLKIT_PATH}/imgui/imgui_tables.cpp" />
+		<file name="${NATIVE_TOOLKIT_PATH}/imgui/imgui_widgets.cpp" />
+
+		<depend name="${NATIVE_TOOLKIT_PATH}/imgui/backends/imgui_impl_opengl3.h" />
+		<depend name="${NATIVE_TOOLKIT_PATH}/imgui/backends/imgui_impl_opengl3_loader.h" />
+		<depend name="${NATIVE_TOOLKIT_PATH}/imgui/backends/imgui_impl_sdl3.h" />
+
+		<file name="${NATIVE_TOOLKIT_PATH}/imgui/backends/imgui_impl_opengl3.cpp" />
+		<file name="${NATIVE_TOOLKIT_PATH}/imgui/backends/imgui_impl_sdl3.cpp" />
+
+	</files>
+
+</xml>

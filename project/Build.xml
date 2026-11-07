@@ -33,6 +33,7 @@
 	<set name="LIME_SDL" value="1" />
 	<set name="LIME_SDL_IMAGE" value="1" if="LIME_SDL" />
 	<set name="LIME_ZLIB" value="1" />
+	<set name="LIME_IMGUI" value="1" if="windows || mac || linux" unless="linux HXCPP_ARMV7 || linux HXCPP_ARM64" />
 
 	<set name="OUTPUT_DIR" value="../ndll" unless="OUTPUT_DIR" />
 	<set name="DEBUGEXTRA" value="-debug" if="fulldebug" />
@@ -191,6 +192,16 @@
 
 		</section>
 
+		<section if="LIME_IMGUI">
+
+			<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/imgui" />
+			<compilerflag value="-I${NATIVE_TOOLKIT_PATH}/imgui/backends" />
+			<compilerflag value="-DLIME_IMGUI" />
+
+			<file name="src/tools/imgui/ImGuiBindings.cpp" />
+
+		</section>
+
 		<compilerflag value="-Wno-conversion-null" if="mingw" />
 
 		<section>
@@ -266,6 +277,7 @@
 	<include name="lib/sdl-files.xml" />
 	<include name="lib/sdl_image-files.xml" />
 	<include name="lib/zlib-files.xml" />
+	<include name="lib/imgui-files.xml" />
 
 
 	<target id="lime" output="${LIBPREFIX}lime${DEBUGEXTRA}${LIBSUFFIX}" tool="linker" toolid="${STD_MODULE_LINK}">
@@ -299,6 +311,7 @@
 		<files id="native-toolkit-glad" if="LIME_GLAD" />
 		<files id="native-toolkit-webm" if="LIME_WEBM" />
 		<files id="native-toolkit-zlib" if="LIME_ZLIB" />
+		<files id="native-toolkit-imgui" if="LIME_IMGUI" />
 
 		<section unless="static_link">
 

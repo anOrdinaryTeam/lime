@@ -8,10 +8,27 @@
 #include <system/System.h>
 #include <ui/Window.h>
 #include <vector>
+#ifdef LIME_IMGUI
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_sdl3.h"
+#endif
 
 namespace lime
 {
 	static SystemCursor currentCursor = DEFAULT;
+
+#ifdef LIME_IMGUI
+	// Dear ImGui is bound to the first window that gets a GL context
+	static Window *imguiPrimaryWindow = nullptr;
+	static bool imguiInitialized = false;
+#endif
+
+	SystemCursor Window::GetCurrentCursor()
+	{
+		return currentCursor;
+	}
 
 	double drawScale = 1.0;
 
@@ -164,6 +181,28 @@ namespace lime
 			OpenGLBindings::defaultRenderbuffer = (int)SDL_GetNumberProperty(props, SDL_PROP_WINDOW_UIKIT_OPENGL_RENDERBUFFER_NUMBER, 0);
 #endif
 
+#ifdef LIME_IMGUI
+			if (!imguiInitialized)
+			{
+				imguiInitialized = true;
+				imguiPrimaryWindow = this;
+
+				IMGUI_CHECKVERSION();
+				ImGui::CreateContext();
+
+				ImGuiIO &io = ImGui::GetIO();
+				io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+				io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+				io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+				io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+				io.ConfigErrorRecoveryEnableAssert = false;
+
+				ImGui_ImplSDL3_InitForOpenGL(sdlWindow, context);
+				// Shadow requests GL 3.2 core on macOS and 4.0 compatibility elsewhere
+				ImGui_ImplOpenGL3_Init("#version 150");
+			}
+#endif
+
 			currentApplication->RegisterWindow(this);
 		}
 		else
@@ -190,6 +229,16 @@ namespace lime
 
 	Window::~Window()
 	{
+#ifdef LIME_IMGUI
+		if (imguiPrimaryWindow == this)
+		{
+			ImGui_ImplOpenGL3_Shutdown();
+			ImGui_ImplSDL3_Shutdown();
+			ImGui::DestroyContext();
+			imguiPrimaryWindow = nullptr;
+		}
+#endif
+
 		if (sdlWindow)
 		{
 			SDL_DestroyWindow(sdlWindow);
@@ -298,6 +347,14 @@ namespace lime
 	{
 		if (context)
 		{
+#ifdef LIME_IMGUI
+			if (imguiPrimaryWindow == this && ImGui::GetCurrentContext() && ImGui::GetCurrentContext()->WithinFrameScope)
+			{
+				ImGui::Render();
+				ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+			}
+#endif
+
 #if defined(LIME_OPENGL)
 #if defined(LIME_GLAD)
 			const bool canInvalidate = glInvalidateFramebuffer != NULL;

@@ -1,0 +1,3 @@
+Dear ImGui (docking branch) vendored from https://github.com/ocornut/imgui
+commit 83f668625ad45364de71d385aeb6a5dd04bee02e (1.93.0 WIP), the same revision Codename Engine's lime pins.
+Only the core sources and the SDL3 + OpenGL3 backends are included.

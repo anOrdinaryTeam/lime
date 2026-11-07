@@ -77,6 +77,7 @@ namespace lime
 		void SetMaximumSize(int width, int height);
 		bool SetBorderless(bool borderless);
 		void SetCursor(SystemCursor cursor);
+		static SystemCursor GetCurrentCursor();
 		void SetDisplayMode(DisplayMode *displayMode);
 		bool SetFullscreen(bool fullscreen);
 		void SetIcon(ImageBuffer *imageBuffer);

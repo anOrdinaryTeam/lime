@@ -17,6 +17,13 @@
 #include <ui/Gamepad.h>
 #include <ui/Gesture.h>
 #include <ui/Joystick.h>
+#include <ui/Window.h>
+#ifdef LIME_IMGUI
+#include "imgui.h"
+#include "imgui_internal.h"
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_sdl3.h"
+#endif
 #include <atomic>
 #include <vector>
 
@@ -42,6 +49,63 @@ namespace lime
 
 	SDL_SensorID gyroscopeSensorID = -1;
 	SDL_Sensor *gyroscopeSensor = nullptr;
+
+#ifdef LIME_IMGUI
+	// Dear ImGui frame bracketing (ported from Codename Engine's lime).
+	// The context is created by the first Window (see Window.cpp), so every
+	// hook checks that it exists and that frames are not nested.
+	static bool imguiFrameActive = false;
+
+	static inline bool ImGuiReady()
+	{
+		return ImGui::GetCurrentContext() != nullptr;
+	}
+
+	static void ImGuiNewFrame()
+	{
+		if (imguiFrameActive || !ImGuiReady() || ImGui::GetCurrentContext()->WithinFrameScope)
+			return;
+
+		imguiFrameActive = true;
+
+		ImGui_ImplOpenGL3_NewFrame();
+
+		ImGuiIO &io = ImGui::GetIO();
+
+		if (Window::GetCurrentCursor() == HIDDEN && !io.WantCaptureMouse)
+		{
+			ImGui::SetMouseCursor(ImGuiMouseCursor_None);
+		}
+
+		ImGui_ImplSDL3_NewFrame();
+		ImGui::NewFrame();
+	}
+
+	static void ImGuiRender()
+	{
+		if (!imguiFrameActive)
+			return;
+
+		imguiFrameActive = false;
+
+		if (!ImGuiReady())
+			return;
+
+		// Window::ContextFlip already rendered the main viewport if a frame was open
+		ImGui::Render();
+
+		ImGuiIO &io = ImGui::GetIO();
+
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			SDL_Window *backupWindow = SDL_GL_GetCurrentWindow();
+			SDL_GLContext backupContext = SDL_GL_GetCurrentContext();
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
+			SDL_GL_MakeCurrent(backupWindow, backupContext);
+		}
+	}
+#endif
 
 	Application::Application()
 	{
@@ -284,13 +348,23 @@ namespace lime
 
 			case SDL_EVENT_RENDER_DEVICE_RESET:
 			{
+#ifdef LIME_IMGUI
+				ImGuiNewFrame();
+#endif
 				RenderEvent renderEventContextLost;
 				renderEventContextLost.type = RENDER_CONTEXT_LOST;
 				RenderEvent::Dispatch(&renderEventContextLost);
+#ifdef LIME_IMGUI
+				ImGuiRender();
+				ImGuiNewFrame();
+#endif
 
 				RenderEvent renderEventContextRestored;
 				renderEventContextRestored.type = RENDER_CONTEXT_RESTORED;
 				RenderEvent::Dispatch(&renderEventContextRestored);
+#ifdef LIME_IMGUI
+				ImGuiRender();
+#endif
 				break;
 			}
 
@@ -542,6 +616,13 @@ namespace lime
 
 	void Application::ProcessKeyEvent(SDL_Event *event)
 	{
+#ifdef LIME_IMGUI
+		// While ImGui has keyboard focus it owns key presses; releases still go
+		// through so keys held before ImGui took focus don't get stuck.
+		if (event->type == SDL_EVENT_KEY_DOWN && ImGuiReady() && ImGui::GetIO().WantCaptureKeyboard)
+			return;
+#endif
+
 		if (KeyEvent::callback)
 		{
 			KeyEvent keyEvent;
@@ -594,6 +675,12 @@ namespace lime
 
 	void Application::ProcessMouseEvent(SDL_Event *event)
 	{
+#ifdef LIME_IMGUI
+		// Same as keys: ImGui owns mouse input while hovered, releases pass through
+		if (event->type != SDL_EVENT_MOUSE_BUTTON_UP && ImGuiReady() && ImGui::GetIO().WantCaptureMouse)
+			return;
+#endif
+
 		if (MouseEvent::callback)
 		{
 			MouseEvent mouseEvent;
@@ -820,6 +907,10 @@ namespace lime
 
 	void Application::RenderFrame()
 	{
+#ifdef LIME_IMGUI
+		ImGuiNewFrame();
+#endif
+
 		ApplicationEvent applicationEvent;
 		applicationEvent.type = UPDATE;
 		applicationEvent.deltaTime = std::fmin((double)frameTime.frame / 1e6, 250.0);
@@ -828,6 +919,10 @@ namespace lime
 		RenderEvent renderEvent;
 		renderEvent.type = RENDER;
 		RenderEvent::Dispatch(&renderEvent);
+
+#ifdef LIME_IMGUI
+		ImGuiRender();
+#endif
 	}
 
 	void Application::FramePacer()
@@ -856,6 +951,11 @@ namespace lime
 
 		while (SDL_PollEvent(&event))
 		{
+#ifdef LIME_IMGUI
+			if (ImGuiReady())
+				ImGui_ImplSDL3_ProcessEvent(&event);
+#endif
+
 			HandleEvent(&event);
 
 			if (!active)
