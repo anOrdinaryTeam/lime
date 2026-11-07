@@ -17,6 +17,10 @@ import lime.system.CFFI;
 import lime.system.CFFIPointer;
 #end
 
+#if cpp
+import cpp.Float32;
+#end
+
 #if (lime_doc_gen && !lime_cffi)
 typedef CFFI = Dynamic;
 typedef CFFIPointer = Dynamic;
