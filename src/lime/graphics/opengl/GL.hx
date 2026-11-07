@@ -877,6 +877,13 @@ class GL
 	}
 
 	#if (lime_opengl || lime_opengles)
+	public static inline function clearDepth(depth:Float):Void
+	{
+		context.clearDepthf(depth);
+	}
+	#end
+
+	#if (lime_opengl || lime_opengles)
 	public static inline function clearDepthf(depth:Float):Void
 	{
 		context.clearDepthf(depth);
@@ -1076,6 +1083,13 @@ class GL
 	{
 		context.depthMask(flag);
 	}
+
+	#if (lime_opengl || lime_opengles)
+	public static inline function depthRange(zNear:Float, zFar:Float):Void
+	{
+		context.depthRangef(zNear, zFar);
+	}
+	#end
 
 	#if (lime_opengl || lime_opengles)
 	public static inline function depthRangef(zNear:Float, zFar:Float):Void
@@ -1781,6 +1795,13 @@ class GL
 	public static inline function getVertexAttribiv(index:Int, pname:Int, params:DataPointer):Void
 	{
 		context.getVertexAttribiv(index, pname, params);
+	}
+	#end
+
+	#if (lime_opengl || lime_opengles)
+	public static inline function getVertexAttribOffset(index:Int, pname:Int):DataPointer
+	{
+		return context.getVertexAttribPointerv(index, pname);
 	}
 	#end
 

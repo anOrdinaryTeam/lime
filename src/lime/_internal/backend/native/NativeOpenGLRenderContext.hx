@@ -1089,6 +1089,14 @@ class NativeOpenGLRenderContext
 		#end
 	}
 
+	/**
+		Same as `clearDepthf` (Codename Engine API, WebGL spelling).
+	**/
+	public inline function clearDepth(depth:Float):Void
+	{
+		clearDepthf(depth);
+	}
+
 	public function clearDepthf(depth:Float):Void
 	{
 		#if (lime_cffi && (lime_opengl || lime_opengles) && !macro)
@@ -1451,6 +1459,14 @@ class NativeOpenGLRenderContext
 		#if (lime_cffi && (lime_opengl || lime_opengles) && !macro)
 		NativeCFFI.lime_gl_depth_mask(flag);
 		#end
+	}
+
+	/**
+		Same as `depthRangef` (Codename Engine API, WebGL spelling).
+	**/
+	public inline function depthRange(zNear:Float, zFar:Float):Void
+	{
+		depthRangef(zNear, zFar);
 	}
 
 	public function depthRangef(zNear:Float, zFar:Float):Void
@@ -2665,6 +2681,14 @@ class NativeOpenGLRenderContext
 		#if (lime_cffi && (lime_opengl || lime_opengles) && !macro)
 		NativeCFFI.lime_gl_get_vertex_attribiv(index, pname, params);
 		#end
+	}
+
+	/**
+		Same as `getVertexAttribPointerv` (Codename Engine API, WebGL spelling).
+	**/
+	public inline function getVertexAttribOffset(index:Int, pname:Int):DataPointer
+	{
+		return getVertexAttribPointerv(index, pname);
 	}
 
 	public function getVertexAttribPointerv(index:Int, pname:Int):DataPointer
