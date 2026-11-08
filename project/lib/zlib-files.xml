@@ -53,6 +53,11 @@
 			<compilerflag value="-DARM_NEON" />
 			<compilerflag value="-DARM_NEON_HASLD4" />
 
+			<!-- the NEON files need NEON enabled, which HXCPP_NO_ARCH_LEVEL leaves off on ARMv7 -->
+			<compilerflag value="-march=armv7-a" if="linux HXCPP_ARMV7" />
+			<compilerflag value="-mfpu=neon" if="linux HXCPP_ARMV7" />
+			<compilerflag value="-mfloat-abi=hard" if="linux HXCPP_ARMV7" />
+
 			<section if="HXCPP_ARM64">
 
 				<compilerflag value="-DARM_CRC32" />
