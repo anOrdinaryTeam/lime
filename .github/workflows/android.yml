@@ -99,10 +99,10 @@ jobs:
           haxelib run lime config ANDROID_SETUP true -nocffi
       - name: Rebuild Lime
         run: |
-          haxelib run lime rebuild android -release -ONLY_ARMV7 -D HXCPP_LTO_THIN
-          haxelib run lime rebuild android -release -ONLY_ARM64 -D HXCPP_LTO_THIN
-          haxelib run lime rebuild android -release -ONLY_X86 -D HXCPP_LTO_THIN
-          haxelib run lime rebuild android -release -ONLY_X86_64 -D HXCPP_LTO_THIN
+          haxelib run lime rebuild android -release -ONLY_ARMV7 -D HXCPP_LTO_THIN -D HXCPP_NO_ARCH_LEVEL
+          haxelib run lime rebuild android -release -ONLY_ARM64 -D HXCPP_LTO_THIN -D HXCPP_NO_ARCH_LEVEL
+          haxelib run lime rebuild android -release -ONLY_X86 -D HXCPP_LTO_THIN -D HXCPP_NO_ARCH_LEVEL
+          haxelib run lime rebuild android -release -ONLY_X86_64 -D HXCPP_LTO_THIN -D HXCPP_NO_ARCH_LEVEL
       - name: Upload Artifact
         uses: actions/upload-artifact@main
         with:
